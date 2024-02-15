@@ -21,8 +21,29 @@ some of them contains missing values, inconsistent that make the data very diffi
 - Clean the data using Pandas functions and python functions
 - Store the cleaned data a to a centralised database for business data processing
 ## Installation
+For good use of this software,users should proceed to the following steps:
+- The main use of the software is to clean data and upload it to a newly created database for future analysis and data manipulation,for this project first we need to install pgAdmin4 for the creation of the database ,and also install Visual Studio Code, a platform to build the software program.
+As data will be download from different sources for cleaning and upload to another database for processing,
+we need to import specifics library to perform those operations.Below is a list of libraries that must be install to run the software:
+   - sqlalchemy
+   - yaml
+   - pandas
+   - psycop2
+   - time
+   - tabula
+   - json
+   - requests
+   - boto3
+   - re
+   - datetime
+   - s3fs
+   - numpy
+
+If the user will save incoming to a different storage location, we suggest installing and the OS library
+and specify the path location where the data will be store and retrieved for data cleaning process.
 ## Usage
-this is us
+
+
 ## Database_utils:
 Before starting the process,we first create a python file named database_utils, and added a class on it.The class inside the python file DatabaseConnector will be use to initiate a connection to the database with the credentials given in yaml file, list available tables to perform data cleaning and a function to store the data to a centralised database.Below is the print screen and description of each function in the Database Connector class.
 #### 4.1 Read_db_creds:
