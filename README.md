@@ -3,11 +3,11 @@
 1. [Description](#description)
 2. [Installation](#installation)
 3. [Usage](#usage)
-4. [Database_Utils](#database_utils)
-      - [4.1 Read_db_creds ](read_db_creds-4.1)
-      - [4.2 Init_db_engine](init_db_engine-4.2)
-      - [4.3 List_db_tables](list_db_tables-4.3)
-      - [4.4 Upload_to_db](upload_to_db-4.4)
+4. [Structure](#structure)
+    - [4.a Database_utils.py](4.a-database_utils.py)
+    - [4.b Data_extraction.py](4.b-data_extraction.py)
+    - [4.c Data_cleaning.py](4.c-data_cleaning.py)
+    - [4.d Data_processing.py](4.d-data_processing.py)  
 ## Description
 Multinational Retail Data Centralisation is a data-driven application system,it collect data
 from different data sources,analyse and clean data and store it in a database.
@@ -39,14 +39,34 @@ we need to import specifics library to perform those operations.Below is a list 
    - s3fs
    - numpy
 
-If the user will save incoming to a different storage location, we suggest installing and the OS library
+If the user will save incoming data to a different storage location, we suggest installing and the OS library
 and specify the path location where the data will be store and retrieved for data cleaning process.
+
 ## Usage
 
 
-## Database_utils:
-Before starting the process,we first create a python file named database_utils, and added a class on it.The class inside the python file DatabaseConnector will be use to initiate a connection to the database with the credentials given in yaml file, list available tables to perform data cleaning and a function to store the data to a centralised database.Below is the print screen and description of each function in the Database Connector class.
-#### 4.1 Read_db_creds:
+## Structure
+First four python files are created:
+- Database_utils.py
+- Data_extraction.py
+- Data_cleaning.py
+- Data_processing.py
+Database_utils.py file contains a python class named DatabaseConnector and,it is used to initiate a connection 
+to the database,collect data stored in each table of the database.
+Data_extraction.py contains a python class named DataExtractor, this file contains functions to extract data from different sources like:
+   - Data stored in a database table
+   - Retrieve data in tabula pdf format
+   - Retrieve data in url json format
+   - Data store in s3 bucket(AWS), CSV format
+   - Data store in s3 bucket(AWS), JSON format
+Data_cleaning.py file contains a python class called DataCleaning,and it is used to clean data retrieved from different sources,
+and to upload the cleaned data to the database.
+Data_processing.py file is the main file of our project,it is used to run the software program.
+
+### 4.a Database_utils.py
+This file contains a python class with functions to allow users to initiate a connection tothe database and a function to to upload cleaned data to the new database.
+below is the list and description of each function within the  database_utils python file.
+#### Read_db_creds:
    This function accept as argument a dictionary of the user credentials and it is used to initiate a connecton with the database as shown below.
    ```
     def read_db_creds(self,db_credentials)-> dict:
@@ -90,7 +110,7 @@ Before starting the process,we first create a python file named database_utils, 
    ```
 
 
-#### 4.2.Init_db_engine:
+#### Init_db_engine:
 This function take as arguments the user credentials,the database type and the database API to create a connection to the database where the data are stored in tables.
 The function reads the user credentials by calling the read_db_creds() function, and use it to initiate a connection to the database engine.
 The figure below illustrates how the function is defined.
@@ -144,7 +164,7 @@ def init_db_engine(
             print("DATABASE ENGINE INITIATiON FAILED")
 ```
 
-#### 4.3. List_db_tables:
+#### List_db_tables:
 This function takes as arguments the user credentials to initiate a connection to the database engine with the corresponding database API and database type,by calling the init_db_engine() function,and return all the available tables in the database.
 the screenshot below shows how the function is defined
 
@@ -186,7 +206,7 @@ def list_db_tables(
     
         
 ```
-#### 4.4. Upload_to_db:
+#### Upload_to_db:
 After collecting and cleaning data, the function is used to upload the data to the centralised database for data processing.It takes as arguments the created database user credentials like username,password,network address,the name of new database to store the cleaned data,and the table name where the data will be stored, as shown below
 
 ```
@@ -220,7 +240,7 @@ def upload_to_db(
         user_data.to_sql(table_name,con=connection,index=False)
         return user_data
 ```
-
+### 4.b Data_extration.py
 
 
 
