@@ -241,6 +241,119 @@ def upload_to_db(
         return user_data
 ```
 ### 4.b Data_extration.py
+The data_extraction.py file is used to extract data from different sources.It comntains a python class defined
+with functions to perform data extraction of different data sources.
+Within the python class we have:
+#### read_rds_table():
+This function connect to the database, extract the tables and return the tables data as a pandas dataframe. 
+The function takes as arguments:
+ - table_name: 
+   The database table to extract data
+ - user_access:
+    The user credentials used to initiate a connection to the database engine
+ - database_type:
+    Type of database used to access the tables
+ - database_api:
+    Application programming interface used to connect this application to the external database to extract data
+The function returns data stored in the database table selected. Below is the screeshot of the read_rsd_table()
+function andthe retsult of the script after testing it.
 
+    ```
+    def read_rds_table(
+            self,
+            table_name:str,
+            user_access:str,
+            database_type:str,
+            database_api:str
+            ):
+            
+            '''
+            This function connect to the database, extract the tables and return the tables data as a pandas 
+            dataframe. 
+            
+            Parameters:
+            --------------
+            table_name: 
+            The database table to extract data
+            user_access:
+            The user credentials used to initiate a connection to the database engine
+            database_type:
+            Type of database used to access the tables
+            database_api:
+            Application programming interface used to connect this application to the external database to extract data
+            
+            Return:
+            ----------
+            Return a pandas Dataframe
+            
+            '''
+            
+            db_initialisation = DatabaseConnector()
+            try:
+                engine = db_initialisation.init_db_engine(user_access,database_type,database_api)
+                with engine.connect() as conn:
+                    user_data = pd.read_sql_table(table_name=table_name,con=conn)
+                    print("\t LIST OF USERS DATA")
+                    return user_data
+            except Exception as error:
+                print("FAILED TO CONNECT TO THE DATABASE...")
+          
+    ```
+    ```
+    user_credentials='db_creds.yaml' 
+    database_type='postgresql'
+    dbapi='psycopg2'
+    host='localhost'
+    user= 'postgres'
+    password='Hermelan17'
+    database = 'sales_data'
+    port= 5432
+        
+        # Tables names to upload data
+    user_table = 'dim_users'
+    card_table = 'dim_card_details'
+    store_table = 'dim_store_details'
+    data_order_table ='orders_table'
+    product_table = 'dim_products' 
+    dates_table = 'dim_date_times' 
+            
+        # Tables names to retrieve data
+    users_table = 'legacy_users'
+    card_data = "https://data-handling-public.s3.eu-west-1.amazonaws.com/card_details.pdf"
+    end_point = 'https://aqj7u5id95.execute-api.eu-west-1.amazonaws.com/prod/number_stores'  
+    end_point2 = 'https://aqj7u5id95.execute-api.eu-west-1.amazonaws.com/prod/store_details/'
+    tokens = {'x-api-key': 'yFBQbwXe9J3sd6zWVAMrK6lcxxr0q1lr2PT6DDMX'}
+    store_csv_file = 'stores_data.csv'
+    order_table = 'orders_table'
+    s3_products = 's3://data-handling-public/products.csv'
+    s3_dates = 'https://data-handling-public.s3.eu-west-1.amazonaws.com/date_details.json'   
+       
+        
+    tables_list = DataExtractor()
+    print(tables_list.read_rds_table(table_name=users_table,user_access=user_credentials,database_type=database_type,database_api=dbapi))
+    
+    ```
+    ```
+    LOADING CREDENTIALS...
+    CREDENTIALS SUCCESSFULLY LOAD
+    DATABASE ENGINE SUCCESSFULLY INITIATED
+    INITIATING DATABASE...
+    LOADING CREDENTIALS...
+    CREDENTIALS SUCCESSFULLY LOAD
+    DATABASE ENGINE SUCCESSFULLY INITIATED
+             LIST OF USERS DATA
+           index first_name last_name date_of_birth                       company  ...         country country_code       phone_number   join_date                             user_uuid
+    0          0   Sigfried     Noack    1990-09-30            Heydrich Junitz KG  ...         Germany           DE   +49(0) 047905356  2018-10-10  93caf182-e4e9-4c6e-bebb-60a1a9dcf9b8
+    1          1        Guy     Allen    1940-12-01                       Fox Ltd  ...  United Kingdom           GB    (0161) 496 0674  2001-12-20  8fe96c3a-d62d-4eb5-b313-cf12d9126a49
+    2          2      Harry  Lawrence    1995-08-02     Johnson, Jones and Harris  ...  United Kingdom           GB  +44(0)121 4960340  2016-12-16  fc461df4-b919-48b2-909e-55c95a03fe6b
+    3          3     Darren   Hussain    1972-09-23                   Wheeler LLC  ...  United Kingdom           GB    (0306) 999 0871  2004-02-23  6104719f-ef14-4b09-bf04-fb0c4620acb0
+    4          4      Garry     Stone    1952-12-20                    Warner Inc  ...  United Kingdom           GB      0121 496 0225  2006-09-01  9523a6d3-b2dd-4670-a51a-36aebc89f579
+    ...      ...        ...       ...           ...
+                 
+    ```
+The read_rds_table initiate a connection to the database engine by calling the init_db_engine() function of the 
+DatabaseConector class store in Database_utils.py python file.Once connected, a pandas module to read sql table is used 
+within the function to read and return data stored in the database table.
 
-
+    
+    
