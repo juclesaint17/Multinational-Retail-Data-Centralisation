@@ -241,6 +241,7 @@ def upload_to_db(
         return user_data
 ```
 ### 4.b Data_extration.py
+
 The data_extraction.py file is used to extract data from different sources.It comntains a python class defined
 with functions to perform data extraction of different data sources.
 Within the python class we have:
@@ -355,5 +356,117 @@ The read_rds_table initiate a connection to the database engine by calling the i
 DatabaseConector class store in Database_utils.py python file.Once connected, a pandas module to read sql table is used 
 within the function to read and return data stored in the database table.
 
+#### retrieve_pdf_data():
+this function is used to retrieve data stored in url link in pdf format and,used a tabula library to read the data retrieved.
+It takes as argument the data URL link as shown below:
+
+    ```
+    def retrieve_pdf_data(self,data_url:str):       
+            '''
+            This function accept a tabular or PDF data url link and return
+            a pandas dataframe
+            Parameters:
+            ---------------
+            data_url: PDF file of the Tabular link
+            
+            Returns:
+            -------
+            Return data as dataframe.
+            
+            '''
+            try:
+                print("Reading all pages from pdf file")
+                card_data = tabula.read_pdf(data_url, pages='all')
+                print("PDF DATA COLLECTED...")
+                return card_data
+            except Exception as error:
+                print("ERROR READING DATA")      
+    ```
+    ```
+    users_table = 'legacy_users'
+    card_data = "https://data-handling-public.s3.eu-west-1.amazonaws.com/card_details.pdf"
+    end_point = 'https://aqj7u5id95.execute-api.eu-west-1.amazonaws.com/prod/number_stores'  
+    end_point2 = 'https://aqj7u5id95.execute-api.eu-west-1.amazonaws.com/prod/store_details/'
+    tokens = {'x-api-key': 'yFBQbwXe9J3sd6zWVAMrK6lcxxr0q1lr2PT6DDMX'}
+    store_csv_file = 'stores_data.csv'
+    order_table = 'orders_table'
+    s3_products = 's3://data-handling-public/products.csv'
+    s3_dates = 'https://data-handling-public.s3.eu-west-1.amazonaws.com/date_details.json'   
+       
+        
+    tables_list = DataExtractor()
+    #print(tables_list.read_rds_table(table_name=users_table,user_access=user_credentials,database_type=database_type,database_api=dbapi))
     
+    pdf_data = tables_list.retrieve_pdf_data(data_url=card_data)
+    print(pdf_data)
+    ```
+    ```
+    18         572810170223       07/24                      Maestro             1997-11-19
+    19  4763878823009700000       07/23                VISA 19 digit             1996-05-12
+    20     4958389621322070       09/32                VISA 16 digit             2016-01-21
+    21  4305758492757250000       09/28                VISA 19 digit             2014-01-01
+    22     5386813678403950       08/31                   Mastercard             2003-06-05
+    23     4195679942480940       04/28                VISA 16 digit             2014-06-16
+    24  4957130953614380000       11/26                VISA 19 digit             1995-10-20
+    25         584413868780       05/23                      Maestro             1998-02-12
+    26       30066133851589       04/24  Diners Club / Carte Blanche             2005-03-06
+    27     6011277092557040       05/31                     Discover             2014-08-21
+    28  4847729374874600000       02/29                VISA 19 digit             2021-11-05
+    29  4627956208650560000       03/24                VISA 19 digit             2021-03-01
+    30     2604195282355750       03/29                   Mastercard             2007-03-05
+    31     6011826162642800       02/28                     Discover             2015-10-07
+    32  4405805374008450000       04/23                VISA 19 digit             1998-10-10
+    33     2658148348730760       07/25                   Mastercard             2022-05-28
     
+    ```
+#### list_number_of_stores:
+This function connect to the API and return the total number of available stores in the end point.
+It takes as arguments:
+ - number_of_stores_url: 
+    The url end point to collect the total number of stores
+ - header_keys: 
+    API key authorisation, key:value pair as a dictionary
+Return the total number of stores available in the given end point.
+Below is the screenshot of the described function
+```
+def list_number_of_stores(
+        self,
+        number_of_stores_url:str,
+        header_keys:dict
+        ):    
+        
+        '''
+        This function connect to the API and return the total number of available stores in the end point
+        Parameters:
+        ------------
+        number_of_stores_url: 
+        The url end point to collect the total number of stores
+        
+        header_keys: 
+        API key authorisation, key:value pair as a dictionary
+        
+        Return:
+        Return the total number of stores available in the end point.
+        
+        '''
+        
+        response = requests.get(number_of_stores_url,headers=header_keys)
+        if response.status_code ==200:
+            stores_numbers= response.json()
+            total_number_of_stores = stores_numbers
+            print(f"The total number of stores is: {total_number_of_stores['number_stores']}")
+        
+        else:       
+            print(f"response failed with status code: {response.status_code}")
+            print(f"Response Text:{response.text}")
+            
+        
+        return total_number_of_stores['number_stores']
+    
+```
+      
+
+
+
+    
+
