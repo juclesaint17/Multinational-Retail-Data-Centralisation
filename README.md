@@ -1,4 +1,5 @@
- # Multinational Retail Data Centralisation
+
+# Multinational Retail Data Centralisation
 # Table of Contents
 1. [Description](#description)
 2. [Installation](#installation)
@@ -640,36 +641,92 @@ This function extract a csv file  from AWS s3 bucket,it akes as arguments:
        AWS URL address of the csv s3 bucket.
 The function return a file in a Dataframe format as illustrated below
   ```
-   def extract_from_s3(self,csv_s3_address:str):
+     def extract_from_s3(self,csv_s3_address:str):
+          '''
+          This function extract a csv file  from AWS s3 bucket
+          Parameters:
+          -----------------
+          csv_s3_address: The address of the csv s3 bucket
+          
+          Return:
+          --------
+          return a file in a Dataframe format
+          '''
+          s3_df_products = pd.read_csv(csv_s3_address,index_col=0)
+          
+          return s3_df_products
+       After running the script
+      PS C:\Users\lesaint\Documents\Multinational_Retail_Data_Collection> python3 .\data_extraction.py
+  LOADING CREDENTIALS...
+  CREDENTIALS SUCCESSFULLY LOAD
+  LOADING CREDENTIALS...
+  CREDENTIALS SUCCESSFULLY LOAD
+  INITIATING DATABASE...
+  DATABASE ENGINE SUCCESSFULLY INITIATED
+                                         product_name product_price  weight        category  ...  date_added                                  uuid          removed product_code
+    0     FurReal Dazzlin' Dimples My Playful Dolphin        £39.99   1.6kg  toys-and-games  ...  2005-12-02  83dc0a69-f96f-4c34-bcb7-928acae19a94  Still_avaliable  R7-3126933h
+    1             Tiffany's World Day Out At The Park        £12.99  0.48kg  toys-and-games  ...  2006-01-09  712254d7-aea7-4310-aff8-8bcdd0aec7ff  Still_avaliable  C2-7287916l
+    2             Tiffany's World Pups Picnic Playset         £7.00    590g  toys-and-games  ...  1997-03-29  b089ef6f-b628-4e37-811d-fffe0102ba64  Still_avaliable  S7-1175877v
+    3        Tiffany's World Wildlife Park Adventures        £12.99    540g  toys-and-games  ...  2013-03-20  d55de422-8b98-47d6-9991-e4bc4c5c0cb0          Removed  D8-8421505n
+    4                         Cosatto Cosy Dolls Pram        £30.00  1.91kg  toys-and-games  ...  2007-12-23  7945b657-cb02-4cc5-96cf-f65ed0a8f235  Still_avaliable  B6-2596063a
+     
+    ```
+#### extract_json_from_():
+This function extract JSON data store in AWS url.
+The function takes as argument:
+ - json_s3_address:
+   The AWS s3_bucket url address where the data is stored.
+Below is the screenshot of the function
+   ```
+   
+    def extract_json_from_s3(self,json_s3_addresss3_address:str):
         '''
-        This function extract a csv file  from AWS s3 bucket
+        This function extract a json data file from AWS s3 bucket
         Parameters:
         -----------------
-        csv_s3_address: The address of the csv s3 bucket
+        json_s3_address: The address of the json s3 bucket
         
         Return:
-        --------
-        return a file in a Dataframe format
+        -------
+        return a pandas data Dataframe
         '''
-        s3_df_products = pd.read_csv(csv_s3_address,index_col=0)
+        s3_df_product = pd.read_json(json_s3_addresss3_address)
         
-        return s3_df_products
-     After running the script
-    PS C:\Users\lesaint\Documents\Multinational_Retail_Data_Collection> python3 .\data_extraction.py
-LOADING CREDENTIALS...
-CREDENTIALS SUCCESSFULLY LOAD
-LOADING CREDENTIALS...
-CREDENTIALS SUCCESSFULLY LOAD
-INITIATING DATABASE...
-DATABASE ENGINE SUCCESSFULLY INITIATED
-                                     product_name product_price  weight        category  ...  date_added                                  uuid          removed product_code
-0     FurReal Dazzlin' Dimples My Playful Dolphin        £39.99   1.6kg  toys-and-games  ...  2005-12-02  83dc0a69-f96f-4c34-bcb7-928acae19a94  Still_avaliable  R7-3126933h
-1             Tiffany's World Day Out At The Park        £12.99  0.48kg  toys-and-games  ...  2006-01-09  712254d7-aea7-4310-aff8-8bcdd0aec7ff  Still_avaliable  C2-7287916l
-2             Tiffany's World Pups Picnic Playset         £7.00    590g  toys-and-games  ...  1997-03-29  b089ef6f-b628-4e37-811d-fffe0102ba64  Still_avaliable  S7-1175877v
-3        Tiffany's World Wildlife Park Adventures        £12.99    540g  toys-and-games  ...  2013-03-20  d55de422-8b98-47d6-9991-e4bc4c5c0cb0          Removed  D8-8421505n
-4                         Cosatto Cosy Dolls Pram        £30.00  1.91kg  toys-and-games  ...  2007-12-23  7945b657-cb02-4cc5-96cf-f65ed0a8f235  Still_avaliable  B6-2596063a
-   
-  ```
+        return s3_df_product
+         
+   ```
+   ```
+  
+      users_table = 'legacy_users'
+      card_data = "https://data-handling-public.s3.eu-west-1.amazonaws.com/card_details.pdf"
+      end_point = 'https://aqj7u5id95.execute-api.eu-west-1.amazonaws.com/prod/number_stores'  
+      end_point2 = 'https://aqj7u5id95.execute-api.eu-west-1.amazonaws.com/prod/store_details/'
+      tokens = {'x-api-key': 'yFBQbwXe9J3sd6zWVAMrK6lcxxr0q1lr2PT6DDMX'}
+      store_csv_file = 'stores_data.csv'
+      order_table = 'orders_table'
+      s3_products = 's3://data-handling-public/products.csv'
+      s3_dates = 'https://data-handling-public.s3.eu-west-1.amazonaws.com/date_details.json'
+      tables_list = DataExtractor()
+      
+      print(tables_list.extract_json_from_s3(s3_dates))
+       After running the script:
+          LOADING CREDENTIALS...
+      CREDENTIALS SUCCESSFULLY LOAD
+      LOADING CREDENTIALS...
+      CREDENTIALS SUCCESSFULLY LOAD
+      INITIATING DATABASE...
+      DATABASE ENGINE SUCCESSFULLY INITIATED
+             timestamp month  year day time_period                             date_uuid
+      0       22:00:06     9  2012  19     Evening  3b7ca996-37f9-433f-b6d0-ce8391b615ad
+      1       22:44:06     2  1997  10     Evening  adc86836-6c35-49ca-bb0d-65b6507a00fa
+      2       10:05:37     4  1994  15     Morning  5ff791bf-d8e0-4f86-8ceb-c7b60bef9b31
+      3       17:29:27    11  2001   6      Midday  1b01fcef-5ab9-404c-b0d4-1e75a0bd19d8
+      4       22:40:33    12  2015  31     Evening  dfa907c1-f6c5-40f0-aa0d-40ed77ac5a44
+      ...          ...   ...   ...  ..         ...                                   ...
+      120156  22:56:56    11  2022  12     Evening  d6c4fb31-720d-4e94-aa6b-dcbcb85f2bb7
+
+   ```
+  
 
         
       
