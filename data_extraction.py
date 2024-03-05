@@ -23,26 +23,36 @@ class DataExtractor:
         ):
         
         '''
-        This function extract the database tables list them,and 
-        convert it into pandas dataframe,store the table as cvs file(optional)
+        This function connect to the database, extract the tables and return the tables data as a pandas 
+        dataframe. 
         
         Parameters:
         --------------
         table_name: 
-        String referencing the database table to retrieve available tables
+        The database table to extract data
+        user_access:
+        The user credentials used to initiate a connection to the database engine
+        database_type:
+        Type of database used to access the tables
+        database_api:
+        Application programming interface used to connect this application to the external database to extract data
         
         Return:
         ----------
         Return a pandas Dataframe
-        '''
         
+        '''
         db_initialisation = DatabaseConnector()
-        engine = db_initialisation.init_db_engine(user_access,database_type,database_api)
-    
-        with engine.connect() as conn:
-            user_data = pd.read_sql_table(table_name=table_name,con=conn)
-            return user_data
-            
+        try:
+            engine = db_initialisation.init_db_engine(user_access,database_type,database_api)
+            with engine.connect() as conn:
+                user_data = pd.read_sql_table(table_name=table_name,con=conn)
+                print(f"\t LIST OF USERS DATA{user_data}")
+                print("")
+                return user_data
+        except Exception as error:
+            print("FAILED TO CONNECT TO THE DATABASE...")       
+         
          
     def retrieve_pdf_data(self,data_url:str):       
         '''
@@ -54,12 +64,18 @@ class DataExtractor:
         
         Returns:
         -------
-        Return a Pandas Dataframe file.
+        Return data as dataframe.
         
         '''
-        card_data = tabula.read_pdf(data_url, pages='all')
-        return card_data
-    
+        try:
+            print("\tREADING PDF DATA FILES...")
+            card_data = tabula.read_pdf(data_url, pages='all')
+            print("\tPDF DATA COLLECTED...")
+            return card_data
+        except Exception as error:
+            print("ERROR READING DATA")
+        
+        
         
     def list_number_of_stores(
         self,
@@ -71,24 +87,28 @@ class DataExtractor:
         This function connect to the API and return the total number of available stores in the end point
         Parameters:
         ------------
-        number_of_stores_url: the url end poin to collect the total number of stores
+        number_of_stores_url: 
+        The url end point to collect the total number of stores
         
-        header_keys: API key authorisation key:value pair Dict()
+        header_keys: 
+        API key authorisation, key:value pair as a dictionary
         
         Return:
-        Return the total number of stores
+        Return the total number of stores available in the end point.
+        
         '''
-        
-        response = requests.get(number_of_stores_url,headers=header_keys)
-        if response.status_code ==200:
-            stores_numbers= response.json()
-            total_number_of_stores = stores_numbers
-            print(f"The total number of stores is: {total_number_of_stores['number_stores']}")
-        
-        else:       
+        try:
+            
+            response = requests.get(number_of_stores_url,headers=header_keys)
+            if response.status_code ==200:
+                stores_numbers= response.json()
+                total_number_of_stores = stores_numbers
+                print(f"The total number of stores is: {total_number_of_stores['number_stores']}")
+    
+        except Exception as error:       
             print(f"response failed with status code: {response.status_code}")
             print(f"Response Text:{response.text}")
-            
+                
         
         return total_number_of_stores['number_stores']
     
@@ -102,91 +122,93 @@ class DataExtractor:
         ):
         
         '''
-        This function list the total number of stores and retrives each store data as a JSON file,convert the file to a dataframe 
+        This function list the total number of stores and retrieves data for every store,
         and store it into a CSV file localy
         
         Parameters
         -------------
-        store_number_url: Url link to read the total number of available stores.
-        store_url: Url link to extract stores data
-        api_keys: the headers  access keys.
-        cvs_file_path: the file path to store the collect data as csv file
+        store_number_url: 
+        Url link to read the total number of available stores.
+        store_url: 
+        Url link to extract stores data
+        api_keys: 
+        The headers  access keys.
+        cvs_file_path: 
+        The file path to store the  data in a csv file
         
         Return
         ----------
-        Return a Dataframe
+        Return a store data as a pandas dataframe
         '''
         
         total_number_of_stores = self.list_number_of_stores(store_number_url,api_keys)
         list_stores_data = []
         for store_index in range(total_number_of_stores):
             store_number = store_index
-            response = requests.get(store_url+str(store_number),headers=api_keys)
-            
-            if response.status_code == 200:
-                store_details = response.json()
-                if store_details:
-                    print(f'STORE : {store_number} RETRIEVED SUCCESSFULLY.')
+            try:
+                response = requests.get(store_url+str(store_number),headers=api_keys)   
+                if response.status_code == 200:
+                    store_details = response.json()
+                    if store_details:
+                        print(f'STORE : {store_number} RETRIEVED SUCCESSFULLY.')
+                        
+                    else:
+                        print('DATA NOT RETRIEVED..')
+                    list_stores_data.append(store_details)
                     
-                else:
-                    print('DATA NOT RETRIEVED..')
-                list_stores_data.append(store_details)
-                
-                print("DATA STORE SUCCESSFULLY")
-    
-            else:
+                    print(f"DATA SUCCESSFULLY SAVED IN {csv_file_path} FILE")
+        
+            except Exception as error:        
                 print(f"Response with store number {store_number} failed with status code:{response.status_code}")
                 print(response.text)
                 time.sleep(1)
-        print("INITIATING DATAFRAME...")        
+        print("CREATING DATAFRAME...")        
         stores_details_df = pd.DataFrame(list_stores_data)
         if True:
             print("DATAFRAME CREATED.")
             time.sleep(1)
-        
-        stores_details_df.to_csv(csv_file_path)
-        if True:
-            print(f"CSV FILE: {csv_file_path} SUCCESSFULLY CREATED")
-            
-        return csv_file_path
+            stores_details_df.to_csv(csv_file_path)
+            if True:
+                print(f"CSV FILE: {csv_file_path} SUCCESSFULLY CREATED")               
+                return csv_file_path
     
  
     def extract_from_s3(self,csv_s3_address:str):
         '''
-        This function extract a csv data from AWS s3 bucket and
-        return a pandas dataframe
+        This function extract a csv file  from AWS s3 bucket
         Parameters:
         -----------------
-        csv_s3_address: String referencing the address of the csv s3 bucket
+        csv_s3_address: The address of the csv s3 bucket
         
         Return:
         --------
-        return a pandas Dataframe
+        return a file in a Dataframe format
         '''
-        s3_df_products = pd.read_csv(csv_s3_address,index_col=0)
+        try:
+            s3_df_products = pd.read_csv(csv_s3_address,index_col=0)
+            print('\tLIST OF PRODUCTS')
+            return s3_df_products
+        except Exception as error:
+            print("FAILED TO EXTRACT DATA FROM S3 LINK")
+       
         
-        return s3_df_products
-    
     
     def extract_json_from_s3(self,json_s3_addresss3_address:str):
         '''
-        This function extract a json data from AWS s3 bucket and
-        return a pandas dataframe
+        This function extract a json data file from AWS s3 bucket
         Parameters:
         -----------------
-        json_s3_address: String referencing the address of the json s3 bucket
+        json_s3_address: The address of the json s3 bucket
         
         Return:
         -------
-        return a pandas Dataframe
+        return a pandas data Dataframe
         '''
-        s3_df_product = pd.read_json(json_s3_addresss3_address)
-        return s3_df_product
+        try:
+            s3_df_product = pd.read_json(json_s3_addresss3_address)
+            return s3_df_product
+        except Exception as error:
+            print("FAILED TO EXTRACT DATA FROM JSON LINK")
         
-        
- 
-
-        
-        
-    
-    
+            
+            
