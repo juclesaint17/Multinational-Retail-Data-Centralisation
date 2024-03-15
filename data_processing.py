@@ -106,6 +106,7 @@ def loads_transform_data():
     print("CLEANING COMPLETED")
     time.sleep(2)
     
+    
     print("CLEANING PRODUCTS DATA...")
     s3_products_data = cleaning.clean_products_data(
         s3_products,
@@ -119,8 +120,8 @@ def loads_transform_data():
     print(s3_products_data)
     print("CLEANING COMPLETED")
     time.sleep(2)
-    
-    print("CLEANING DATES EVENTS DATA...")  
+       
+    #print("CLEANING DATES EVENTS DATA...")  
     dates_events_cleaning = cleaning.clean_dates_events(
         s3_dates,
         host,

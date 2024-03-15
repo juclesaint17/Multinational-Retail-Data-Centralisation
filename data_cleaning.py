@@ -37,7 +37,7 @@ class DataCleaning:
         ):
         
         '''
-        This function clean user data using pandas
+        This function clean users data using pandas
         '''
         user_data = DataExtractor().read_rds_table(
             db_table_name,
@@ -47,8 +47,11 @@ class DataCleaning:
             )
         
         user_data.set_index('index',inplace=True)
-        print('USERS DATA TO CLEAN')
+        
+        print('USERS DATA INFO ')
         print(user_data.info())
+        print(f"Checking NaN values\n: {user_data.isna().sum()}")
+        user_data.dropna(inplace=True)
         time.sleep(1)
         print("CLEANING DIM_USERS_TABLES")
         user_data['first_name']=user_data['first_name'].astype('string')
@@ -61,21 +64,25 @@ class DataCleaning:
         user_data['last_name']=user_data['last_name'].apply(lambda x: re.sub(r'\W+', '', x)).astype('string')
         user_data['last_name'] = user_data['last_name'].astype('string').str.replace('\d+','')
         
-        user_data['date_of_birth'] = pd.to_datetime(user_data['date_of_birth'],errors='coerce',infer_datetime_format=True,format='mixed')
-        user_data['date_of_birth']=user_data['date_of_birth'].apply(lambda x: x if isinstance(x, datetime.datetime) else np.nan)
+        user_data['company'] = user_data['company'].astype('string')
+        user_data['company'] = user_data['company'].apply(lambda x: re.sub(r'\W', ' ', x).title()).astype('string')
+        
+        uniques_countries = ['Germany', 'United Kingdom', 'United States']
+        user_data = user_data[user_data['country'].isin(uniques_countries)]
+        user_data['country'] = user_data['country'].astype('string')
+        
+        
+        user_data['date_of_birth'] = pd.to_datetime(user_data['date_of_birth'],format='mixed')
+        #user_data['date_of_birth']=user_data['date_of_birth'].apply(lambda x: x if isinstance(x, datetime.datetime) else np.nan)
         print(f"Checking NaN values in Date of Birth Column: {user_data['date_of_birth'].isna().sum()}")
         
-        user_data['company'] = user_data['company'].astype('string')
-        user_data['company']=user_data['company'].apply(lambda x: re.sub(r'\W', ' ', x).title()).astype('string')
-        user_data['company']=user_data['company'].apply(lambda x: x if isinstance(x, str)else np.nan).astype('string')
         
         user_data['email_address'] = user_data['email_address'].astype('string')
         def check_email_format(emails):
             
             if "@" in emails:   
                 return emails
-            else:
-                np.nan         
+                   
         user_data['email_address'] = user_data['email_address'].apply(check_email_format).astype('string')
         
         user_data['address'] = user_data['address'].astype('string')
@@ -86,25 +93,23 @@ class DataCleaning:
         user_data['address']=user_data['address'].apply(remove_special_characters).astype('string')
         user_data['address'] = user_data['address'].apply(lambda x: " ".join(x.split())).astype('string')
         
-        uniques_countries = ['Germany', 'United Kingdom', 'United States']
-        user_data = user_data[user_data['country'].isin(uniques_countries)]
-        user_data['country'] = user_data['country'].astype('string')
         
         user_data['country_code'] = user_data['country_code'].astype('string')
         user_data['country_code'] = user_data['country_code'].str.replace('GGB','GB')
-        unique_codes =['DE','GB','US']
-        user_data['country_code']=user_data['country_code'].apply(lambda x: x if x in unique_codes else np.nan)
+        #unique_codes =['DE','GB','US']
+        #user_data['country_code']=user_data['country_code'].apply(lambda x: x if x in unique_codes else np.nan)
         user_data['country_code'] = user_data['country_code'].astype('string')
         
         user_data['phone_number'] = user_data['phone_number'].apply(lambda x: ''.join([number for number in str(x) if number.isnumeric()])).astype('int64')
         
-        user_data['join_date']= pd.to_datetime(user_data['join_date'],errors='coerce',infer_datetime_format=True,format='mixed')
-        user_data['join_date']=user_data['join_date'].apply(lambda x: x if isinstance(x, datetime.datetime) else np.nan)
+        user_data['join_date']= pd.to_datetime(user_data['join_date'],format='mixed')
+        #user_data['join_date']=user_data['join_date'].apply(lambda x: x if isinstance(x, datetime.datetime) else np.nan)
         
+        print(f"Checking NaN values after cleaning:\n{user_data.isna().sum()}")
         user_data.reset_index(inplace=True)
         print(user_data.info())
 
-        print(f"UPLOADING CLEANING DATA TO THE DATABASE TABLE {table_name} OF {database_name} DATABASE..")
+        print(f"UPLOADING CLEANED DATA TO THE DATABASE TABLE {table_name} OF {database_name} DATABASE..")
         
         try:
             print("\tESTABLISHING DATABASE CONNECTION...")
@@ -127,9 +132,7 @@ class DataCleaning:
         except Exception as error:
             print("CONNECTION TO THE DATABASE FAILED")
                 
-        
-          
-              
+            
     def clean_card_data(
         self,
         data_link:str,
@@ -190,6 +193,7 @@ class DataCleaning:
                 return f"CARDS DATA TABLE: \n{cards_data}"
         except Exception as error:
             print("CONNECTION TO THE DATABASE FAILED")
+    
     
     def called_clean_store_data(
         self,
@@ -327,6 +331,7 @@ class DataCleaning:
         products_dim['removed'] = products_dim['removed'].astype('string')
         
         products_dim['product_code']=products_dim['product_code'].apply(lambda x: str(x).replace('\W','')).astype('string')
+        products_dim['product_code'] = products_dim['product_code'].apply(lambda x: str(x).upper()).astype('string')
         
         products_dim['EAN']=products_dim['EAN'].str.replace(r'[^0-9]+', '').astype('int64')
         EAN_validation = is_numeric_dtype(products_dim['EAN'])
@@ -354,7 +359,8 @@ class DataCleaning:
         def clean_currency_price(price):
             
             if '£' in price:                 
-                if isinstance(price, str): 
+                if isinstance(price, str):
+                        
                     return price.replace('£','').replace(',','')        
         products_dim['product_price']=products_dim['product_price'].apply(clean_currency_price).astype('float')
         
@@ -529,14 +535,6 @@ class DataCleaning:
         dates_times = dates_times[dates_times['time_period'].isin(unique_time_period)]
         dates_times['time_period'] = dates_times['time_period'].astype('string')
         print(dates_times['time_period'].unique())
-        
-        
-        print('\tCreating new pdSerie Sales_date and cleaning the column')
-        dates_times['sales_date']=pd.to_datetime(dates_times.year.astype(str) + '/' + 
-                                              dates_times.month.astype(str) + '/' 
-                                              + dates_times.day.astype(str) + '/' 
-                                              + dates_times.timestamp.astype(str),errors='coerce',infer_datetime_format=True)
-        print(f"Checking NaN values in sales_data: {dates_times['sales_date'].isna().sum()}")
         
         dates_times['day']=dates_times['day'].str.replace(r'[^0-9]+', '').astype('string')
         dates_times['year']=dates_times['year'].str.replace(r'[^0-9]+', '').astype('string')
