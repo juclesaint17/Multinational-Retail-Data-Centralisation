@@ -282,7 +282,8 @@ function andthe retsult of the script after testing it.
             database_type:
             Type of database used to access the tables
             database_api:
-            Application programming interface used to connect this application to the external database to extract data
+            Application programming interface used to connect this application to the external database to extract 
+              data
             
             Return:
             ----------
@@ -640,6 +641,7 @@ This function extract a csv file  from AWS s3 bucket,it akes as arguments:
     - csv_s3_address:
        AWS URL address of the csv s3 bucket.
 The function return a file in a Dataframe format as illustrated below
+
   ```
      def extract_from_s3(self,csv_s3_address:str):
           '''
@@ -670,8 +672,10 @@ The function return a file in a Dataframe format as illustrated below
     3        Tiffany's World Wildlife Park Adventures        £12.99    540g  toys-and-games  ...  2013-03-20  d55de422-8b98-47d6-9991-e4bc4c5c0cb0          Removed  D8-8421505n
     4                         Cosatto Cosy Dolls Pram        £30.00  1.91kg  toys-and-games  ...  2007-12-23  7945b657-cb02-4cc5-96cf-f65ed0a8f235  Still_avaliable  B6-2596063a
      
-    ```
+```
+
 #### extract_json_from_():
+
 This function extract JSON data store in AWS url.
 The function takes as argument:
  - json_s3_address:
@@ -726,7 +730,443 @@ Below is the screenshot of the function
       120156  22:56:56    11  2022  12     Evening  d6c4fb31-720d-4e94-aa6b-dcbcb85f2bb7
 
    ```
-  
+  ### 4.c Data_cleaning.py:
+  The Data cleaning python file is used to clean the data after being retrieved.
+  Most data after extraction contains different data types,and sometimes mixed with bad characters,
+  within this file we defined many functions to clean data coming from different data sources
+  before uploading them to the databaseaccurate.
+  The screenshot below illustrate the cleaning process of data.
+     ```
+     
+                 def clean_user_data(
+                    self,
+                    db_table_name:str,
+                    access_tokens:str,
+                    database_type:str,
+                    database_api:str,
+                    host:str,
+                    database_user:str,
+                    password:str,
+                    database_name:str,
+                    port:int,
+                    table_name:str
+                    ):
+                    
+                    '''
+                    This function clean users data using pandas
+                    '''
+                    user_data = DataExtractor().read_rds_table(
+                        db_table_name,
+                        access_tokens,
+                        database_type,
+                        database_api
+                        )
+                    
+                    user_data.set_index('index',inplace=True)
+                    
+                    print('USERS DATA INFO ')
+                    print(user_data.info())
+                    print(f"Checking NaN values\n: {user_data.isna().sum()}")
+                    user_data.dropna(inplace=True)
+                    time.sleep(1)
+                    print("CLEANING DIM_USERS_TABLES")
+                    user_data['first_name']=user_data['first_name'].astype('string')
+                    user_data['first_name']=user_data['first_name'].apply(lambda x: ''.join([char if ord(char) < 
+            128 else '' for char in x])).astype('string')
+                    user_data['first_name']=user_data['first_name'].apply(lambda x: re.sub(r'\W+', '', x)).astype('string')
+                    user_data['first_name'] = user_data['first_name'].astype('string').str.replace('\d+','')
+                    
+                    user_data['last_name']=user_data['last_name'].astype('string')
+                    user_data['last_name']=user_data['last_name'].apply(lambda x: ''.join([char if ord(char) < 128 else '' for char in x])).astype('string')
+                    user_data['last_name']=user_data['last_name'].apply(lambda x: re.sub(r'\W+', '', x)).astype('string')
+                    user_data['last_name'] = user_data['last_name'].astype('string').str.replace('\d+','')
+                    
+                    user_data['company'] = user_data['company'].astype('string')
+                    user_data['company'] = user_data['company'].apply(lambda x: re.sub(r'\W', ' ', x).title()).astype('string')
+                    
+                    uniques_countries = ['Germany', 'United Kingdom', 'United States']
+                    user_data = user_data[user_data['country'].isin(uniques_countries)]
+                    user_data['country'] = user_data['country'].astype('string')
+                    
+                    
+                    user_data['date_of_birth'] = pd.to_datetime(user_data['date_of_birth'],format='mixed')
+                    #user_data['date_of_birth']=user_data['date_of_birth'].apply(lambda x: x if isinstance(x, datetime.datetime) else np.nan)
+                    print(f"Checking NaN values in Date of Birth Column: {user_data['date_of_birth'].isna().sum()}")
+                    
+                    
+                    user_data['email_address'] = user_data['email_address'].astype('string')
+                    def check_email_format(emails):
+                        
+                        if "@" in emails:   
+                            return emails
+                               
+                    user_data['email_address'] = user_data['email_address'].apply(check_email_format).astype('string')
+                    
+                    user_data['address'] = user_data['address'].astype('string')
+                    user_data['address'] = user_data['address'].apply(lambda x: re.sub(r'[^\w\s]', '', x).title()).astype('string')
+                    def remove_special_characters(s): 
+                        return re.sub(r'[^a-zA-Z0-9\s]', '', str(s)) 
+                    #Apply the function to the column 
+                    user_data['address']=user_data['address'].apply(remove_special_characters).astype('string')
+                    user_data['address'] = user_data['address'].apply(lambda x: " ".join(x.split())).astype('string')
+                    
+                    
+                    user_data['country_code'] = user_data['country_code'].astype('string')
+                    user_data['country_code'] = user_data['country_code'].str.replace('GGB','GB')
+                    #unique_codes =['DE','GB','US']
+                    #user_data['country_code']=user_data['country_code'].apply(lambda x: x if x in unique_codes else np.nan)
+                    user_data['country_code'] = user_data['country_code'].astype('string')
+                    
+                    user_data['phone_number'] = user_data['phone_number'].apply(lambda x: ''.join([number for number in str(x) if number.isnumeric()])).astype('int64')
+                    
+                    user_data['join_date']= pd.to_datetime(user_data['join_date'],format='mixed')
+                    #user_data['join_date']=user_data['join_date'].apply(lambda x: x if isinstance(x, datetime.datetime) else np.nan)
+                    
+                    print(f"Checking NaN values after cleaning:\n{user_data.isna().sum()}")
+                    user_data.reset_index(inplace=True)
+                    print(user_data.info())
+            
+                    print(f"UPLOADING CLEANED DATA TO THE DATABASE TABLE {table_name} OF {database_name} DATABASE..")
+                    
+                    try:
+                        print("\tESTABLISHING DATABASE CONNECTION...")
+                        connection = DatabaseConnector()
+                   
+                        if True:          
+                            upload_data =connection.upload_to_db(
+                                host=host,
+                                user=database_user,
+                                password=password,
+                                database_name=database_name,
+                                port=port,
+                                user_data=user_data,
+                                table_name=table_name
+                                )
+                            
+                            print(f"\tTABLE {table_name} OF DATABASE: {database_name} UPDATED")
+                                           
+                            return f"USERS DATA TABLE: \n{user_data}"
+                    except Exception as error:
+                        print("CONNECTION TO THE DATABASE FAILED")
+                            
+            
+   ```
+The screenshot above shows how we define a function clean_user_data(), to clean data retrieved from
+a database table, and upload it into the user database table.
+the screenshot below illustrate the cleaning process of a tabular data retrieved from pdf url link.
+   ```
+             def clean_card_data(
+                self,
+                data_link:str,
+                host:str,
+                database_user:str,
+                password:str,
+                database_name:str,
+                port:int,
+                table_name:str
+                ):
+                
+                data = DataExtractor().retrieve_pdf_data(data_link)
+                
+                print(f'Found {len(data)} tables')
+                cards_data = pd.concat(data,ignore_index=True)
+                
+                cards_data['expiry_date']=pd.to_datetime(cards_data['expiry_date'],format='%m/%y',errors='coerce')
+                cards_data['expiry_date']=cards_data['expiry_date'].apply(lambda x: x if isinstance(x, datetime.datetime) else np.nan)
+                
+                cards_data['card_provider'] = cards_data['card_provider'].astype('string')
+                providers = ['Diners Club / Carte Blanche','American Express','JCB 16 digit','JCB 15 digit','Maestro','Mastercard','Discover','VISA 19 digit','VISA 16 digit','VISA 13 digit']
+                cards_data = cards_data[cards_data['card_provider'].isin(providers)]
+                print(f"\tList of uniques values in card provider column :{cards_data['card_provider'].unique()}")
+                
+                cards_data['card_number']=cards_data['card_number'].apply(lambda x: ''.join([number for number in str(x) if number.isnumeric()]))
+                cards_data['card_number'] = cards_data['card_number'].str.replace(r'\D+', '')
+                cards_data['card_number']=cards_data['card_number'].str.replace(r'[^0-9]+', '')
+                cards_data['card_number'] = cards_data['card_number'].astype('int64')
+        
+                card_type_validation = is_numeric_dtype(cards_data['card_number'])
+                if card_type_validation:
+                    print('\tCards numbers are numerics')
+                else:
+                    print('Errors')
+                
+                cards_data['date_payment_confirmed']=pd.to_datetime(cards_data['date_payment_confirmed'],errors='coerce',infer_datetime_format=True,format='mixed')
+                print(cards_data.info())
+                
+                print(f"UPLOADING DATA TO DATABASE TABLE {table_name} OF {database_name} DATABASE..")
+                
+                try:
+                    print("\tESTABLISHING DATABASE CONNECTION...")
+                    connection = DatabaseConnector()
+               
+                    if True:          
+                        upload_data =connection.upload_to_db(
+                            host=host,
+                            user=database_user,
+                            password=password,
+                            database_name=database_name,
+                            port=port,
+                            user_data=cards_data,
+                            table_name=table_name
+                            )
+                        
+                        print(f"\tTABLE {table_name} OF DATABASE: {database_name} UPDATED")
+                                       
+                        return f"CARDS DATA TABLE: \n{cards_data}"
+                except Exception as error:
+                    print("CONNECTION TO THE DATABASE FAILED")
+                    
+   ```
+The example below shows of the cleaning process of data retrived from an url link,then upload to the database.
+
+     ```
+            def called_clean_store_data(
+                self,
+                stores_number_url:str,
+                store_link:str,
+                access_keys:dict,
+                csv_file,host:str,
+                database_user:str,
+                password:str,
+                database_name:str,
+                port:int,
+                table_name:str
+                ):
+                
+                data = DataExtractor()
+                stores = data.retrieve_stores_data(
+                    stores_number_url,
+                    store_link,
+                    access_keys,
+                    csv_file
+                    )
+                print("\tCLEANING STORES DATA...")
+                pd.set_option('display.max_columns', None)
+                store_df = pd.read_csv(stores,index_col=0)
+                print("SETTING COLUMN INDEX")
+                store_df.set_index('index',inplace=True)
+                print(store_df.info())
+ store_df['opening_date']=pd.to_datetime(store_df['opening_date'],errors='coerce',infer_datetime_format=True,format='mixed')
+                print('Setting Countries codes')
+                store_df['country_code'].unique()
+                store_code = ['GB', 'DE', 'US']
+                store_df = store_df[store_df['country_code'].isin(store_code)]
+                store_df['country_code']=store_df['country_code'].astype('string')
+                
+                print("Setting up proper continents names")
+                store_df['continent'] = store_df['continent'].astype('string')
+                store_df['continent'] = store_df['continent'].replace('eeEurope','Europe' )
+                store_df['continent'] = store_df['continent'].replace('eeAmerica','America')
+                print(store_df['continent'].unique())
+                
+                print(f"\tList of stores type: {store_df['store_type'].unique()}")
+                store_df['store_type'] = store_df['store_type'].astype('string')
+                
+                store_df['staff_numbers']=store_df['staff_numbers'].apply(lambda x: ''.join([number for number in str(x) if number.isnumeric()]))
+                store_df['staff_numbers']=store_df['staff_numbers'].str.replace(r'\D+', '')
+                store_df['staff_numbers'] = store_df['staff_numbers'].astype(int)
+                staff_numbers_validation = is_numeric_dtype(store_df['staff_numbers'])
+                if staff_numbers_validation:            
+                    print('The staff_numbers column contains only numerical values')
+                else:        
+                    print('check data format')
+        
+                
+                store_df['store_code']=store_df['store_code'].apply(lambda x: str(x).replace('\W','')).astype('string')
+                number_of_store = store_df['store_code'].count()
+                store_code_format = store_df['store_code'].str.upper().count()
+                if store_code_format == number_of_store:        
+                    print('All data in store_code column are formatted in Uppercase format. ')
+                else:
+                    print('please check the data')
+                 
+                    
+                store_df['locality'] = store_df['locality'].astype('string').str.replace('\d+','')
+                store_df['locality']=store_df['locality'].str.replace(r'[^A-Za-z]+', '')
+                
+                store_df['lat']=store_df['lat'].astype('string')
+                
+                store_df['longitude']=store_df['longitude'].str.replace(r'[^0-9\-\.\,]+', '').astype('string')
+                
+                store_df['latitude']=store_df['latitude'].str.replace(r'[^0-9\-\.\,]+', '').astype('string')
+                
+                def remove_special_characters(s):    
+                    return re.sub(r'[^a-zA-Z0-9\s]', '', str(s)) 
+                store_df['address']=store_df['address'].apply(remove_special_characters).astype('string')
+                store_df['address'] = store_df['address'].apply(lambda x: " ".join(x.split())).astype('string')
+                print(store_df.info())
+                
+                print(f"UPLOADING DATA TO DATABASE TABLE {table_name} OF {database_name} DATABASE..")
+        
+                try:
+                    print("\tESTABLISHING DATABASE CONNECTION...")
+                    
+                    connection = DatabaseConnector()
+                    if True:          
+                        upload_data =connection.upload_to_db(
+                            host=host,
+                            user=database_user,
+                            password=password,
+                            database_name=database_name,
+                            port=port,
+                            user_data=store_df,
+                            table_name=table_name
+                            )
+                        
+                        print(f"\tTABLE {table_name} OF DATABASE: {database_name} UPDATED")
+                                       
+                        return f"STORES DATA TABLE: \n{store_df}"
+                except Exception as error:
+                    print("CONNECTION TO THE DATABASE FAILED")                
+   ```
+### 4.d Data_processing.py:
+The data processing python file is the main file for this project, whithin it we define a fonction to process the application.
+Below is the screenshot of the Data_processing.py file
+```
+  import time
+from database_utils import DatabaseConnector
+from data_extraction import DataExtractor
+from data_cleaning import DataCleaning
+
+
+def loads_transform_data():
+    cleaning = DataCleaning()   
+    
+    #Database acess credentials
+    
+    user_credentials='db_creds.yaml' 
+    database_type='postgresql'
+    dbapi='psycopg2'
+    host='localhost'
+    user= 'postgres'
+    password='-----------'
+    database = 'sales_data'
+    port= 5432
+    
+    # Database tables names to upload data
+    dim_user_table = 'dim_users'
+    card_table = 'dim_card_details'
+    store_table = 'dim_store_details'
+    data_order_table ='orders_table'
+    product_table = 'dim_products' 
+    dates_table = 'dim_date_times' 
+        
+    # Data sources to retrieve data
+    users_table = 'legacy_users'
+    order_table = 'orders_table'
+    card_data = "https://data-handling-public.s3.eu-west-1.amazonaws.com/card_details.pdf"
+    end_point = 'https://aqj7u5id95.execute-api.eu-west-1.amazonaws.com/prod/number_stores'  
+    end_point2 = 'https://aqj7u5id95.execute-api.eu-west-1.amazonaws.com/prod/store_details/'
+    tokens = {'x-api-key': 'yFBQbwXe9J3sd6zWVAMrK6lcxxr0q1lr2PT6DDMX'}
+    s3_products = 's3://data-handling-public/products.csv'
+    s3_dates = 'https://data-handling-public.s3.eu-west-1.amazonaws.com/date_details.json'   
+    
+    # Data storage files
+    store_csv_file = 'stores_data.csv'
+
+      
+        
+    print("CLEANING USERS DATA...")
+    user_cleaning = cleaning.clean_user_data(
+        users_table,
+        user_credentials,
+        database_type,
+        dbapi,
+        host,
+        user,
+        password,
+        database,
+        port,
+        dim_user_table
+        )
+    print(user_cleaning)
+    print("CLEANIND COMPLETED")
+    time.sleep(2)
+    
+    print("CLEANING CARDS DATA...")
+    cards_cleaning = cleaning.clean_card_data(
+        card_data,
+        host,
+        user,
+        password,
+        database,
+        port,
+        card_table
+        )
+    print(cards_cleaning)
+    print("CLEANING COMPLETED")
+    time.sleep(2)
+    
+    print("CLEANING STORES DATA...")  
+    stores_cleaning = cleaning.called_clean_store_data(
+        end_point,
+        end_point2,
+        tokens,
+        store_csv_file,
+        host=host,
+        database_user=user,
+        password=password,
+        database_name=database,
+        port=port,
+        table_name=store_table
+        )
+    print(stores_cleaning)
+    print("CLEANING COMPLETED") 
+    time.sleep(2)
+    
+    print("CLEANING ORDERS DATA...")
+    orders_cleaning = cleaning.clean_orders_data(
+        order_table,
+        user_credentials,
+        database_type,
+        dbapi,
+        host,
+        user,
+        password,
+        database,
+        port,
+        data_order_table
+        )
+    print(orders_cleaning)
+    print("CLEANING COMPLETED")
+    time.sleep(2)
+    
+    
+    print("CLEANING PRODUCTS DATA...")
+    s3_products_data = cleaning.clean_products_data(
+        s3_products,
+        host,
+        user,
+        password,
+        database,
+        port,
+        product_table
+        )
+    print(s3_products_data)
+    print("CLEANING COMPLETED")
+    time.sleep(2)
+       
+    #print("CLEANING DATES EVENTS DATA...")  
+    dates_events_cleaning = cleaning.clean_dates_events(
+        s3_dates,
+        host,
+        user,
+        password,
+        database,
+        port,
+        dates_table
+        )
+    print(dates_events_cleaning)
+    print("CLEANING COMPLETED")
+      
+
+
+if __name__== '__main__':
+    print("STARTING DATA EXTRACT AND CLEANING...")
+    loads_transform_data()
+    print("\tDATABASE UPDATED WITH SUCCESS")
+
+```
 
         
       
