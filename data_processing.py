@@ -14,7 +14,7 @@ def loads_transform_data():
     dbapi='psycopg2'
     host='localhost'
     user= 'postgres'
-    password='Hermelan17'
+    password='********'
     database = 'sales_data'
     port= 5432
     
