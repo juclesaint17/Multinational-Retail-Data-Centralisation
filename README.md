@@ -8,7 +8,8 @@
     - [4.a Database_utils.py](4.a-database_utils.py)
     - [4.b Data_extraction.py](4.b-data_extraction.py)
     - [4.c Data_cleaning.py](4.c-data_cleaning.py)
-    - [4.d Data_processing.py](4.d-data_processing.py)  
+    - [4.d Data_processing.py](4.d-data_processing.py)
+5. [Querying_Data](#querying_data) 
 ## Description
 Multinational Retail Data Centralisation is a data-driven application system,it collect data
 from different data sources,analyse and clean data and store it in a database.
@@ -1168,10 +1169,174 @@ if __name__== '__main__':
 
 ```
 
-        
-      
-
-
-
+## Querying_Data
+   After retrieving and storing the data to the database server, we performed Sql queries operations to clean the data and 
+   update data with specific data types,
+   also create a relational database model with the tables by joining them together with foreign keys constraints.
+   The screenshot below illustrate the mapping of the tables.
+   
+```
+           /* UPDATING MULTINATIONAL DATABASE DATA*/
     
+        /* UPDATING ORDERS_TABLE*/
+        
+        select * from orders_table
+        
+        CREATE EXTENSION "uuid-ossp";
+        
+        ALTER TABLE orders_table
+        
+        	ALTER COLUMN date_uuid TYPE UUID USING date_uuid::uuid,
+    	ALTER COLUMN user_uuid TYPE UUID USING user_uuid::uuid,
+    	ALTER COLUMN store_code TYPE VARCHAR(25),
+    	ALTER COLUMN product_code TYPE VARCHAR(25),
+    	ALTER COLUMN product_quantity TYPE SMALLINT,
+    	ALTER COLUMN card_number TYPE VARCHAR(19);
+    
+    /* UPDATING DIM_USERS TABLE*/
+    
+    SELECT * FROM dim_users
+    
+    ALTER TABLE dim_users
+        ALTER COLUMN first_name TYPE VARCHAR(255),
+    	ALTER COLUMN last_name TYPE VARCHAR(255),
+    	ALTER COLUMN date_of_birth TYPE DATE,
+    	ALTER COLUMN country_code TYPE VARCHAR(2),
+    	ALTER COLUMN user_uuid TYPE UUID USING user_uuid::uuid,
+    	ALTER COLUMN join_date TYPE DATE;
+    
+    
+    /* UPDATING DIM_STORE DATA */
+    
+    SELECT * FROM dim_store_details
+    
+    ALTER TABLE dim_store_details
+        ALTER COLUMN longitude TYPE FLOAT,
+    	ALTER COLUMN locality TYPE VARCHAR(255),
+    	ALTER COLUMN store_code TYPE VARCHAR(25),
+    	ALTER COLUMN staff_numbers TYPE SMALLINT,
+    	ALTER COLUMN opening_date TYPE DATE,
+    	ALTER COLUMN store_type TYPE VARCHAR(255),
+    	ALTER COLUMN latitude TYPE FLOAT,
+    	ALTER COLUMN country_code TYPE VARCHAR(2),
+    	ALTER COLUMN continent TYPE VARCHAR(255);
+    
+    
+    /* UPDATING DIM_PRODUCTS DATA*/
+    
+    SELECT * FROM dim_products
+    
+    ALTER TABLE dim_products
+        ADD weight_class VARCHAR(255);
+    	
+    UPDATE dim_products
+    SET weight_class = (CASE
+        WHEN weight < 2 THEN 'Light'
+    	WHEN weight >= 2 AND weight < 40 THEN 'Mid_Sized'
+    	WHEN weight >= 40 AND weight < 140 THEN 'Heavy'
+    	ELSE 'Truck_Required'
+    END);
+    
+    ALTER TABLE dim_products
+        RENAME COLUMN removed TO still_available;
+    
+    ALTER TABLE dim_products
+        ALTER COLUMN product_price TYPE FLOAT,
+    	ALTER COLUMN weight TYPE FLOAT,
+    	ALTER COLUMN "EAN" TYPE VARCHAR(255),
+    	ALTER COLUMN product_CODE TYPE VARCHAR(25),
+    	ALTER COLUMN date_added TYPE DATE,
+    	ALTER COLUMN  uuid TYPE UUID USING (uuid_generate_v4()),
+    	ALTER COLUMN still_available TYPE boolean
+    	USING CASE still_available WHEN 'Still_available' THEN true ELSE false END,
+    	ALTER COLUMN weight_class TYPE VARCHAR(14);
+    	
+    	
+    
+    /* UPDATING DIM_DATE_TIMES DATA */
+    
+    SELECT * FROM dim_products;
 
+    ALTER TABLE dim_date_times
+        ALTER COLUMN month TYPE VARCHAR(2),
+    	ALTER COLUMN year TYPE VARCHAR(4),
+    	ALTER COLUMN day TYPE VARCHAR(2),
+    	ALTER COLUMN time_period TYPE VARCHAR(12),
+    	ALTER COLUMN  date_uuid TYPE UUID USING (uuid_generate_v4());
+    
+    
+    /* UPDATING DIM_CARD_DETAILS*/
+    
+    SELECT * FROM dim_card_details
+    
+    ALTER TABLE dim_card_details
+        ALTER COLUMN card_number TYPE VARCHAR(19),
+    	ALTER COLUMN date_payment_confirmed TYPE DATE,
+    	ALTER COLUMN expiry_date TYPE VARCHAR(7);
+    UPDATE dim_card_details 
+         SET expiry_date = substring(expiry_date, 1,7);
+    
+    /* UPDATING TABLES WITH PRIMARY KEYS*/
+    ALTER TABLE dim_card_details ADD PRIMARY KEY (card_number);
+    ALTER TABLE dim_date_times ADD PRIMARY KEY (date_uuid);
+    ALTER TABLE dim_products ADD PRIMARY KEY (product_code);
+    ALTER TABLE dim_store_details ADD PRIMARY KEY (store_code);
+    ALTER TABLE dim_users ADD PRIMARY KEY (user_uuid);
+    
+        /* UPDATING FOREIGN KEYS*/
+        SELECT * FROM orders_table
+        
+        ALTER TABLE orders_table
+            ADD CONSTRAINT fk_card_orders_table FOREIGN KEY (card_number) REFERENCES dim_card_details (card_number);
+        
+        ALTER TABLE orders_table
+            ADD CONSTRAINT fk_dates_times_table FOREIGN KEY (date_uuid) REFERENCES dim_date_times (date_uuid);
+        	
+        ALTER TABLE orders_table
+            ADD CONSTRAINT fk_products_table FOREIGN KEY (product_code) REFERENCES dim_products (product_code);
+        	
+        ALTER TABLE orders_table
+            ADD CONSTRAINT fk_stores_table FOREIGN KEY (store_code) REFERENCES dim_store_details (store_code);
+        	
+        ALTER TABLE orders_table
+            ADD CONSTRAINT fk_users_table FOREIGN KEY (user_uuid) REFERENCES dim_users (user_uuid);
+
+```   
+After mapping the database, we query the database to get an update metrics of data.
+Below are  screenshots illustrating the data manipulation.
+
+- Querying numbers of stores in each country:
+ 
+![2024-04-02](https://github.com/juclesaint17/Multinational-Retail-Data-Centralisation/assets/94936087/9f8bdc85-d20b-4e73-90a8-81e112abe924)
+
+-Querying locality with higher number of stores:
+
+![2024-04-02 (1)](https://github.com/juclesaint17/Multinational-Retail-Data-Centralisation/assets/94936087/9ed8f767-a218-4737-afbf-35d9658f24e2)
+
+-Querying monthly largest sales:
+
+
+![2024-04-02 (2)](https://github.com/juclesaint17/Multinational-Retail-Data-Centralisation/assets/94936087/34453cf5-0170-4e97-a042-b9e2788d148f)
+
+-Querying online and offline products quantity count:
+
+![2024-04-02 (3)](https://github.com/juclesaint17/Multinational-Retail-Data-Centralisation/assets/94936087/5656ddb0-614d-4f27-8883-46aabcd6a98e)
+
+-Querying percentage of sales by store:
+
+![2024-04-02 (4)](https://github.com/juclesaint17/Multinational-Retail-Data-Centralisation/assets/94936087/080e4b8c-e104-4836-b381-81329d66989d)
+
+-Querying higher monthly cost by year:
+![2024-04-02 (5)](https://github.com/juclesaint17/Multinational-Retail-Data-Centralisation/assets/94936087/624f8b91-5a11-4540-8419-c0faba271c5b)
+
+-Querying overall staff headcount by country:
+
+![2024-04-02 (6)](https://github.com/juclesaint17/Multinational-Retail-Data-Centralisation/assets/94936087/52f9b1ec-3de4-4b84-8fb6-336ff759a7e6)
+
+-Querying Germain store top selling:
+
+![2024-04-02 (7)](https://github.com/juclesaint17/Multinational-Retail-Data-Centralisation/assets/94936087/26d59e20-22ad-4db7-84c2-a4d5333db11b)
+
+-Querying year sales average time:
+
+![2024-04-02 (8)](https://github.com/juclesaint17/Multinational-Retail-Data-Centralisation/assets/94936087/8f6929b0-40e0-4b91-8668-7d0ed976a64a)
