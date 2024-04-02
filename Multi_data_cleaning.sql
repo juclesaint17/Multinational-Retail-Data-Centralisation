@@ -125,8 +125,10 @@ ALTER TABLE orders_table
 
 
                         /*Query data*/
+						
 
 /* stores in countries*/
+
 
 SELECT
     country_code AS country, COUNT(*) AS total_no_stores
@@ -139,6 +141,7 @@ ORDER BY
 
 
 /* lOCALITY WITH HIGHER NUMBER OF STORES*/
+
 SELECT
     locality, COUNT(*) AS total_no_stores
 FROM
@@ -148,10 +151,10 @@ GROUP BY
 ORDER BY
     total_no_stores DESC;
 	
+	
+	
 /*Monthly largest sales*/
-	
-	
-	
+		
 SELECT 
      ROUND(SUM(product_price * product_quantity)::Decimal,2) as total_sales,
 	 
@@ -164,6 +167,7 @@ INNER JOIN dim_date_times d
 ON d.date_uuid = o.date_uuid
 GROUP BY month	
 ORDER BY total_sales DESC;
+	
 	
 /* Count online sales*/
 
