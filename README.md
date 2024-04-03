@@ -3,29 +3,30 @@
 # Table of Contents
 1. [Description](#description)
 2. [Installation](#installation)
-3. [Usage](#usage)
-4. [Structure](#structure)
+3. [Structure](#structure)
     - [4.a Database_utils.py](4.a-database_utils.py)
     - [4.b Data_extraction.py](4.b-data_extraction.py)
     - [4.c Data_cleaning.py](4.c-data_cleaning.py)
     - [4.d Data_processing.py](4.d-data_processing.py)
-5. [Querying_Data](#querying_data) 
+4. [Querying_Data](#querying_data)
+5. 
 ## Description
 Multinational Retail Data Centralisation is a data-driven application system,it collect data
-from different data sources,analyse and clean data and store it in a database.
+from different data sources,analyse and clean data and store them in a database.
 The database will act as a centralised location where data can be accessed for multi tasks processing.
 The purpose of building this project is to facilitate retails companies with sales data spread across different data source 
 to access and analyse the data easily.
 While extracting and analysing data coming from different sources, data have different formats and,
-some of them contains missing values, inconsistent that make the data very difficult to be processed easily.To make data more consistent and available to end users we proceed to the steps below to clean data.
+some of them have missing values, inconsistent values that make the data very difficult to be processed easily.
+To make data more consistent and available to end users we proceed to the steps below to clean data.
 - Import Pandas library
 - read data with Pandas classes
 - Clean the data using Pandas functions and python functions
 - Store the cleaned data a to a centralised database for business data processing
 ## Installation
 For good use of this software,users should proceed to the following steps:
-- The main use of the software is to clean data and upload it to a newly created database for future analysis and data manipulation,for this project first we need to install pgAdmin4 for the creation of the database ,and also install Visual Studio Code, a platform to build the software program.
-As data will be download from different sources for cleaning and upload to another database for processing,
+- The main use of the software is to retrieve, clean data and upload it to a newly created database for future analysis and data manipulation,for this project first we need to install pgAdmin4 for the creation of the database ,and also install Visual Studio Code, a platform to build the software program.
+As data will be downloaded from different sources for cleaning and, upload to another database for processing,
 we need to import specifics library to perform those operations.Below is a list of libraries that must be install to run the software:
    - sqlalchemy
    - yaml
@@ -42,23 +43,21 @@ we need to import specifics library to perform those operations.Below is a list 
    - numpy
 
 If the user will save incoming data to a different storage location, we suggest installing and the OS library
-and specify the path location where the data will be store and retrieved for data cleaning process.
-
-## Usage
+and specify the location path  where the data will be store and retrieved for data cleaning process.
 
 
 ## Structure
-First four python files are created:
+First, four python files are created:
 - Database_utils.py
 - Data_extraction.py
 - Data_cleaning.py
 - Data_processing.py
 Database_utils.py file contains a python class named DatabaseConnector and,it is used to initiate a connection 
-to the database,collect data stored in each table of the database.
+  with the database engine,collect data stored in each table of the database.
 Data_extraction.py contains a python class named DataExtractor, this file contains functions to extract data from different sources like:
    - Data stored in a database table
    - Retrieve data in tabula pdf format
-   - Retrieve data in url json format
+   - Retrieve data stored in url as json format
    - Data store in s3 bucket(AWS), CSV format
    - Data store in s3 bucket(AWS), JSON format
 Data_cleaning.py file contains a python class called DataCleaning,and it is used to clean data retrieved from different sources,
